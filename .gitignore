@@ -78,3 +78,9 @@ build/
 
 *.local
 *.local.json
+
+# Local Docker Compose
+compose.yml
+
+# Actual importer local configuration
+config/config.json

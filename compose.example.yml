@@ -1,0 +1,24 @@
+services:
+  actual-importer:
+    image: ghcr.io/YOUR_GITHUB_USERNAME/actual-importer:latest
+    container_name: actual-importer
+    restart: unless-stopped
+
+    environment:
+      ACTUAL_SERVER_URL: "https://your-actual-server.example.com"
+      ACTUAL_SYNC_ID: "YOUR_ACTUAL_SYNC_ID"
+      ACTUAL_PASSWORD_FILE: "/run/secrets/actual_password"
+
+    volumes:
+      - ./config/config.json:/app/config.json:ro
+
+      - /path/to/inbox:/inbox
+      - /path/to/processed:/processed
+      - /path/to/failed:/failed
+
+    secrets:
+      - actual_password
+
+secrets:
+  actual_password:
+    file: ./secrets/actual_password

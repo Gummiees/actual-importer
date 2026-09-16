@@ -1,0 +1,14 @@
+{
+  "name": "actual-importer",
+  "version": "1.0.0",
+  "description": "Generic bank transaction importer for Actual Budget",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "start": "node src/importer.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@actual-app/api": "latest"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "accounts": {
+    "account-name-1": {
+      "actualAccountId": "YOUR_ACTUAL_ACCOUNT_ID",
+      "dateToleranceDays": 1,
+      "parser": "sabadell"
+    },
+    "account-name-2": {
+      "actualAccountId": "YOUR_ACTUAL_ACCOUNT_ID",
+      "dateToleranceDays": 1,
+      "parser": "sabadell"
+    },
+    "credit-card": {
+      "actualAccountId": "YOUR_ACTUAL_ACCOUNT_ID",
+      "dateToleranceDays": 0,
+      "parser": "sabadell-card"
+    }
+  }
+}
