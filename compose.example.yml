@@ -1,6 +1,7 @@
 services:
   actual-importer:
     image: ghcr.io/YOUR_GITHUB_USERNAME/actual-importer:latest
+    build: .
     container_name: actual-importer
     restart: unless-stopped
 
@@ -8,9 +9,15 @@ services:
       ACTUAL_SERVER_URL: "https://your-actual-server.example.com"
       ACTUAL_SYNC_ID: "YOUR_ACTUAL_SYNC_ID"
       ACTUAL_PASSWORD_FILE: "/run/secrets/actual_password"
+      # Primera prueba: no escribe ni mueve ficheros. Cambia a "false"
+      # sólo después de revisar los logs y las categorías.
+      DRY_RUN: "true"
+      # Categoriza coincidencias existentes que todavía no tienen categoría.
+      CATEGORIZE_EXISTING: "false"
 
     volumes:
       - ./config/config.json:/app/config.json:ro
+      - ./mapping.json:/app/mapping.json:ro
 
       - /path/to/inbox:/inbox
       - /path/to/processed:/processed

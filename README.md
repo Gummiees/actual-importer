@@ -192,6 +192,16 @@ Create a local:
 mapping.json
 ```
 
+Start from the included template:
+
+```bash
+cp mapping.example.json mapping.json
+```
+
+Replace every `REPLACE_WITH_...` value with the **exact** group and category
+names from your Actual Budget. `mapping.json` is ignored by Git, so personal
+rules stay local.
+
 and mount it into the container:
 
 ```yaml
@@ -289,6 +299,32 @@ Start the importer:
 ```bash
 docker compose up -d
 ```
+
+The example Compose file starts with `DRY_RUN: "true"`. In this mode the
+importer connects to Actual and reports what it would import, but does not
+write transactions or move files out of `/inbox`. Review the logs first:
+
+```bash
+docker compose logs -f actual-importer
+```
+
+When the parsed transactions, transfer detection and categories look correct,
+change the setting to `DRY_RUN: "false"` and restart the container:
+
+```bash
+docker compose up -d
+```
+
+## Categorizing existing transactions
+
+By default the importer never modifies transactions that are already in
+Actual. To categorize an imported history, set `CATEGORIZE_EXISTING: "true"`
+while keeping `DRY_RUN: "true"`. It will list only existing transactions that
+have no category and match a mapping rule. It skips transfers and split
+transactions.
+
+After reviewing the proposed changes, set `DRY_RUN: "false"` and restart the
+container once. Set `CATEGORIZE_EXISTING` back to `"false"` afterwards.
 
 View logs:
 

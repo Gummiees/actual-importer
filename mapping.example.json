@@ -1,0 +1,39 @@
+{
+  "rules": [
+    {
+      "name": "Amazon",
+      "pattern": "amazon",
+      "priority": 50,
+      "categoryGroup": "REPLACE_WITH_YOUR_GROUP",
+      "category": "REPLACE_WITH_YOUR_AMAZON_CATEGORY"
+    },
+    {
+      "name": "Netflix, Spotify or Amazon Prime",
+      "pattern": "netflix|spotify|amazon.*prime|prime.*amazon",
+      "priority": 90,
+      "categoryGroup": "REPLACE_WITH_YOUR_GROUP",
+      "category": "REPLACE_WITH_YOUR_SUBSCRIPTIONS_CATEGORY"
+    },
+    {
+      "name": "Steam",
+      "pattern": "steam",
+      "priority": 50,
+      "categoryGroup": "REPLACE_WITH_YOUR_GROUP",
+      "category": "REPLACE_WITH_YOUR_GAMES_CATEGORY"
+    },
+    {
+      "name": "Uber Eats",
+      "pattern": "uber[ ]*eats",
+      "priority": 100,
+      "categoryGroup": "REPLACE_WITH_YOUR_GROUP",
+      "category": "REPLACE_WITH_YOUR_RESTAURANTS_CATEGORY"
+    },
+    {
+      "name": "Uber",
+      "pattern": "uber",
+      "priority": 50,
+      "categoryGroup": "REPLACE_WITH_YOUR_GROUP",
+      "category": "REPLACE_WITH_YOUR_TRANSPORT_CATEGORY"
+    }
+  ]
+}

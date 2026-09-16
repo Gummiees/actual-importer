@@ -7,6 +7,5 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY src ./src
-COPY config/mapping.json ./mapping.json
 
 CMD ["node", "src/importer.js"]

@@ -25,6 +25,7 @@ secrets/
 
 config/config.json
 config/*.local.json
+mapping.json
 
 # ============================================================
 # Logs
@@ -84,3 +85,7 @@ compose.yml
 
 # Actual importer local configuration
 config/config.json
+
+data/failed/*
+data/processed/*
+data/inbox/*
