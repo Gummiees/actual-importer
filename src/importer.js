@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import * as actual from '@actual-app/api';
 
@@ -494,10 +495,148 @@ function parseSabadellCard(content, filePath) {
 }
 
 // ============================================================
+// Revolut personal account TSV parser
+// ============================================================
+
+function parseRevolutAmount(value, field, lineNumber) {
+  const amount = Number(value.trim().replace(',', '.'));
+
+  if (!Number.isFinite(amount)) {
+    throw new Error(`Línea ${lineNumber}: ${field} de Revolut inválido: ${value}`);
+  }
+
+  return Math.round(amount * 100);
+}
+
+function parseRevolutDate(value, field, lineNumber) {
+  const match = value.trim().match(/^(\d{4}-\d{2}-\d{2}) \d{1,2}:\d{2}:\d{2}$/);
+
+  if (!match) {
+    throw new Error(`Línea ${lineNumber}: ${field} de Revolut inválida: ${value}`);
+  }
+
+  return match[1];
+}
+
+function parseRevolutAccountStatement(content, expectedCurrency = 'EUR') {
+  const lines = content
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .filter((line) => line.trim());
+
+  if (lines.length < 2) {
+    throw new Error('El TSV de Revolut no contiene transacciones');
+  }
+
+  const header = lines[0].split('\t').map((value) => normalizeText(value));
+
+  if (
+    header.length !== 10 ||
+    header[0] !== 'tipo' ||
+    header[1] !== 'producto' ||
+    header[2] !== 'fecha de inicio' ||
+    !header[3].startsWith('fecha de finaliz') ||
+    !header[4].startsWith('descripci') ||
+    header[5] !== 'importe' ||
+    !header[6].startsWith('comisi') ||
+    header[7] !== 'divisa' ||
+    header[8] !== 'state' ||
+    header[9] !== 'saldo'
+  ) {
+    throw new Error('Cabecera TSV de Revolut no reconocida');
+  }
+
+  const transactions = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const lineNumber = i + 1;
+    const columns = lines[i].split('\t');
+
+    if (columns.length !== 10) {
+      throw new Error(
+        `Línea ${lineNumber}: se esperaban 10 columnas, encontradas ${columns.length}`,
+      );
+    }
+
+    const [
+      type,
+      product,
+      startedAt,
+      completedAt,
+      description,
+      amountRaw,
+      feeRaw,
+      currency,
+      state,
+      balanceRaw,
+    ] = columns.map((value) => value.trim());
+
+    if (currency !== expectedCurrency) {
+      throw new Error(
+        `Línea ${lineNumber}: divisa de Revolut inesperada: ${currency} ` +
+          `(se esperaba ${expectedCurrency})`,
+      );
+    }
+
+    // Reverted card payments have no completed date or final balance. They
+    // must not create an expense in Actual.
+    if (state !== 'COMPLETADO') {
+      continue;
+    }
+
+    const operationDate = parseRevolutDate(startedAt, 'fecha de inicio', lineNumber);
+    const valueDate = parseRevolutDate(
+      completedAt,
+      'fecha de finalización',
+      lineNumber,
+    );
+    const amountCents = parseRevolutAmount(amountRaw, 'importe', lineNumber);
+    const feeCents = parseRevolutAmount(feeRaw, 'comisión', lineNumber);
+    const balanceCents = parseRevolutAmount(balanceRaw, 'saldo', lineNumber);
+
+    // Revolut reports fees as positive values. They reduce the balance in
+    // addition to the transaction amount and need to be imported too.
+    const netAmountCents = amountCents - feeCents;
+    const rawForId = [
+      type,
+      product,
+      startedAt,
+      completedAt,
+      description,
+      amountRaw,
+      feeRaw,
+      currency,
+      state,
+      balanceRaw,
+    ].join('\t');
+
+    transactions.push({
+      operationDate,
+      valueDate,
+      amountCents: netAmountCents,
+      balanceCents,
+      concept: description,
+      nif: '',
+      reference: `${type} / ${product}`,
+      importedId: `revolut:${crypto
+        .createHash('sha256')
+        .update(rawForId)
+        .digest('hex')}`,
+    });
+  }
+
+  if (transactions.length === 0) {
+    throw new Error('El TSV de Revolut no contiene transacciones completadas');
+  }
+
+  return transactions;
+}
+
+// ============================================================
 // Parser dispatcher
 // ============================================================
 
-function parseFile(parserName, content, filePath) {
+function parseFile(parserName, content, filePath, accountConfig) {
   switch (parserName) {
     case 'sabadell':
       return parseSabadell(content);
@@ -505,16 +644,22 @@ function parseFile(parserName, content, filePath) {
     case 'sabadell-card':
       return parseSabadellCard(content, filePath);
 
+    case 'revolut':
+      return parseRevolutAccountStatement(
+        content,
+        accountConfig.currency ?? 'EUR',
+      );
+
     default:
       throw new Error(`Parser desconocido: ${parserName}`);
   }
 }
 
 // ============================================================
-// Find CSV files
+// Find transaction files
 // ============================================================
 
-async function findCsvFiles(dir) {
+async function findTransactionFiles(dir) {
   const result = [];
 
   async function walk(current) {
@@ -531,8 +676,10 @@ async function findCsvFiles(dir) {
       }
 
       if (
-        (entry.isFile() && entry.name.toLowerCase().endsWith('.csv')) ||
-        entry.name.toLowerCase().endsWith('.txt')
+        entry.isFile() &&
+        ['.csv', '.tsv', '.txt'].some((extension) =>
+          entry.name.toLowerCase().endsWith(extension),
+        )
       ) {
         result.push(fullPath);
       }
@@ -1235,7 +1382,12 @@ async function processFile(filePath, config, mappingRules, resolvedCategories) {
     // Parse
     // --------------------------------------------------------
 
-    const sourceTransactions = parseFile(account.parser, content, filePath);
+    const sourceTransactions = parseFile(
+      account.parser,
+      content,
+      filePath,
+      account,
+    );
 
     // --------------------------------------------------------
     // Existing Actual transactions
@@ -1394,14 +1546,14 @@ async function processFile(filePath, config, mappingRules, resolvedCategories) {
 // ============================================================
 
 async function processInbox(config, mappingRules) {
-  const files = await findCsvFiles(INBOX);
+  const files = await findTransactionFiles(INBOX);
 
   if (files.length === 0) {
     return;
   }
 
   console.log('');
-  console.log(`Encontrados ${files.length} CSV(s)`);
+  console.log(`Encontrados ${files.length} fichero(s)`);
 
   await loadActual();
 
@@ -1454,9 +1606,13 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error('');
-  console.error('❌ ERROR FATAL');
-  console.error(error);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error('');
+    console.error('❌ ERROR FATAL');
+    console.error(error);
+    process.exit(1);
+  });
+}
+
+export { parseRevolutAccountStatement };

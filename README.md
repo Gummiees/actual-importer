@@ -501,6 +501,21 @@ or:
 }
 ```
 
+or, for a personal Revolut account statement exported as TSV:
+
+```json
+{
+  "parser": "revolut"
+}
+```
+
+Place it in the inbox under the account key configured in `config.json`, for
+example `/inbox/revolut/principal/account-statement.tsv`. The `revolut` parser
+accepts EUR transactions with the standard Revolut personal-account TSV
+columns by default. Set `"currency": "USD"` in that account's configuration
+for a USD statement. Reverted rows are skipped. A Revolut fee is included in
+the imported amount, so the amount reconciles with the statement balance.
+
 Additional parsers can be added to support other banks and file formats.
 
 ---
