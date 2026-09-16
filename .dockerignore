@@ -1,0 +1,10 @@
+.git/
+.github/
+node_modules/
+secrets/
+data/
+config/config.json
+mapping.json
+compose.yml
+*.log
+.DS_Store

@@ -257,6 +257,24 @@ The mapping therefore does not contain Actual category IDs.
 
 # Docker Compose
 
+## Published image and Portainer
+
+Each push to `main` publishes a multi-architecture image for `amd64` and
+`arm64` hosts to GitHub Container Registry:
+
+```text
+ghcr.io/gummiees/actual-importer:latest
+```
+
+For Portainer, deploy the Compose file as a Stack on the NAS. Use absolute NAS
+paths for `config.json`, `mapping.json`, the password secret, and the three
+data directories. The NAS does not need the repository or a local build.
+
+If the package remains private, create a GitHub personal access token with
+read access to Packages and add it to Portainer as a `ghcr.io` registry
+credential. Alternatively, make the resulting container package public in
+GitHub after the first successful workflow run.
+
 Copy the example Compose file:
 
 ```bash

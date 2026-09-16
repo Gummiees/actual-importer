@@ -1,7 +1,6 @@
 services:
   actual-importer:
-    image: ghcr.io/YOUR_GITHUB_USERNAME/actual-importer:latest
-    build: .
+    image: ghcr.io/gummiees/actual-importer:latest
     container_name: actual-importer
     restart: unless-stopped
 
