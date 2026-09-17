@@ -82,6 +82,7 @@ build/
 
 # Local Docker Compose
 compose.yml
+portainer-stack.yml
 
 # Actual importer local configuration
 config/config.json

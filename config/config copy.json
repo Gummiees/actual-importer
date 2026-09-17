@@ -1,0 +1,25 @@
+{
+  "accounts": {
+    "sabadell/principal": {
+      "actualAccountId": "d60b2cd2-607f-4888-b422-b06c50684db6",
+      "dateToleranceDays": 1,
+      "parser": "sabadell"
+    },
+    "sabadell/tarjeta": {
+      "actualAccountId": "df17b7f3-0fff-4032-b7a9-81d9938cb5da",
+      "dateToleranceDays": 0,
+      "parser": "sabadell-card"
+    },
+    "sabadell/ahorros": {
+      "actualAccountId": "46c34b82-ec78-485d-aa09-d39cca5f463a",
+      "dateToleranceDays": 1,
+      "parser": "sabadell"
+    },
+    "revolut/principal": {
+      "actualAccountId": "df194ca7-e05b-470a-8f63-1bab1fa49609",
+      "dateToleranceDays": 1,
+      "parser": "revolut",
+      "currency": "EUR"
+    }
+  }
+}
